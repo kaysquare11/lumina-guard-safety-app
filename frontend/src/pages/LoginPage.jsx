@@ -1,33 +1,19 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, AlertCircle, ArrowRight } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Shield, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-
-// Lumina Logo Component
-function LuminaLogo({ className = "h-10 w-10" }) {
-  return (
-    <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M50 10 C30 25, 10 35, 10 50 C10 65, 25 80, 50 90 C75 80, 90 65, 90 50 C90 35, 70 25, 50 10 Z" 
-            fill="#8B7BC7" opacity="0.2"/>
-      <path d="M30 40 Q50 25, 70 40 L70 45 Q50 30, 30 45 Z" fill="#8B7BC7"/>
-      <path d="M30 55 Q50 70, 70 55 L70 50 Q50 65, 30 50 Z" fill="#9FB5A4"/>
-      <circle cx="50" cy="50" r="8" fill="#E8B4C8"/>
-      <path d="M47 48 L49 52 L53 47" stroke="white" strokeWidth="2" fill="none"/>
-    </svg>
-  );
-}
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { login, error: authError } = useAuth();
-
+  const { login } = useAuth();
+  
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
-  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const [focusedField, setFocusedField] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -40,218 +26,171 @@ function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
-
+    
     if (!formData.email || !formData.password) {
       setError('Please fill in all fields');
-      setLoading(false);
       return;
     }
 
+    setLoading(true);
+
     try {
-      const result = await login(formData);
-      if (result.success) {
+      const response = await fetch('http://localhost:5001/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: formData.email.toLowerCase().trim(),
+          password: formData.password
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        login(data.token, data.user);
         navigate('/dashboard');
       } else {
-        setError(result.message);
+        setError(data.message || 'Login failed');
       }
-    } catch (err) {
-      setError('An unexpected error occurred');
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('Network error. Make sure backend is running.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Animated Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-100 via-indigo-100 to-pink-100">
-        <div className="absolute top-20 left-20 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
-        <div className="absolute top-40 right-20 w-72 h-72 bg-indigo-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
-        <div className="absolute -bottom-8 left-40 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
-      </div>
-
-      {/* Content */}
-      <div className="relative min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-6xl grid md:grid-cols-2 gap-8 items-center">
-          
-          {/* Left Side - Branding */}
-          <div className="hidden md:block text-center">
-            <LuminaLogo className="h-32 w-32 mx-auto mb-6 animate-pulse" />
-            <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-              Welcome Back
-            </h1>
-            <p className="text-xl text-gray-700 mb-6">
-              Your circle of light awaits
-            </p>
-            <div className="space-y-4 text-left max-w-md mx-auto">
-              <div className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-purple-600 rounded-full mt-2"></div>
-                <p className="text-gray-600">Secure access to your safety dashboard</p>
-              </div>
-              <div className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-indigo-600 rounded-full mt-2"></div>
-                <p className="text-gray-600">Real-time protection at your fingertips</p>
-              </div>
-              <div className="flex items-start space-x-3">
-                <div className="w-2 h-2 bg-purple-600 rounded-full mt-2"></div>
-                <p className="text-gray-600">Connect with your safety circle</p>
-              </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center p-4">
+      <div className="max-w-6xl w-full grid md:grid-cols-2 gap-8 items-center">
+        
+        <div className="text-center md:text-left space-y-6">
+          <div className="flex items-center justify-center md:justify-start space-x-3">
+            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
+              <Shield className="h-10 w-10 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                Lumina Guard
+              </h1>
+              <p className="text-sm text-gray-600">Your Circle of Light</p>
             </div>
           </div>
+          
+          <div>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Welcome Back</h2>
+            <p className="text-xl text-gray-600">Your circle of light awaits</p>
+          </div>
 
-          {/* Right Side - Glass Morphism Form */}
-          <div className="relative">
-            {/* Glass Card */}
-            <div className="backdrop-blur-2xl bg-white/30 rounded-3xl p-8 md:p-10 shadow-2xl border border-white/50">
-              
-              {/* Mobile Logo */}
-              <div className="md:hidden text-center mb-6">
-                <LuminaLogo className="h-16 w-16 mx-auto mb-3" />
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                  Lumina Guard
-                </h2>
-              </div>
-
-              <div className="mb-8">
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">Sign In</h2>
-                <p className="text-gray-600">Enter your credentials to continue</p>
-              </div>
-
-              {/* Error Alert */}
-              {(error || authError) && (
-                <div className="mb-6 p-4 bg-red-50/80 backdrop-blur-sm border border-red-200 rounded-xl flex items-start animate-shake">
-                  <AlertCircle className="h-5 w-5 text-red-600 mr-3 flex-shrink-0 mt-0.5" />
-                  <span className="text-red-700 text-sm">{error || authError}</span>
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Email Field */}
-                <div>
-                  <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
-                    Email Address
-                  </label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Mail className={`h-5 w-5 transition-colors ${focusedField === 'email' ? 'text-purple-600' : 'text-gray-400'}`} />
-                    </div>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      onFocus={() => setFocusedField('email')}
-                      onBlur={() => setFocusedField(null)}
-                      className="block w-full pl-12 pr-4 py-3.5 bg-white/50 backdrop-blur-sm border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all text-gray-900 placeholder-gray-400"
-                      placeholder="you@example.com"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Password Field */}
-                <div>
-                  <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
-                    Password
-                  </label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Lock className={`h-5 w-5 transition-colors ${focusedField === 'password' ? 'text-purple-600' : 'text-gray-400'}`} />
-                    </div>
-                    <input
-                      type="password"
-                      id="password"
-                      name="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      onFocus={() => setFocusedField('password')}
-                      onBlur={() => setFocusedField(null)}
-                      className="block w-full pl-12 pr-4 py-3.5 bg-white/50 backdrop-blur-sm border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 transition-all text-gray-900 placeholder-gray-400"
-                      placeholder="••••••••"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="group relative w-full py-4 px-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold hover:shadow-2xl transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none overflow-hidden"
-                >
-                  <span className="relative z-10 flex items-center justify-center">
-                    {loading ? (
-                      <>
-                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Signing In...
-                      </>
-                    ) : (
-                      <>
-                        Sign In
-                        <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                      </>
-                    )}
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                </button>
-              </form>
-
-              {/* Register Link */}
-              <div className="mt-8 text-center">
-                <p className="text-gray-700">
-                  Don't have an account?{' '}
-                  <Link to="/register" className="font-semibold text-purple-600 hover:text-purple-700 underline decoration-2 underline-offset-2">
-                    Create one now
-                  </Link>
-                </p>
-              </div>
+          <div className="space-y-3 text-gray-600">
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+              <span>Secure access to your safety dashboard</span>
             </div>
-
-            {/* Back to Home */}
-            <div className="text-center mt-6">
-              <Link to="/" className="text-gray-700 hover:text-gray-900 font-medium inline-flex items-center">
-                <span className="mr-2">←</span> Back to Home
-              </Link>
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+              <span>Real-time protection at your fingertips</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+              <span>Connect with your safety circle</span>
             </div>
           </div>
         </div>
-      </div>
 
-      <style jsx>{`
-        @keyframes blob {
-          0%, 100% {
-            transform: translate(0, 0) scale(1);
-          }
-          33% {
-            transform: translate(30px, -50px) scale(1.1);
-          }
-          66% {
-            transform: translate(-20px, 20px) scale(0.9);
-          }
-        }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-5px); }
-          75% { transform: translateX(5px); }
-        }
-        .animate-shake {
-          animation: shake 0.3s ease-in-out;
-        }
-      `}</style>
+        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 md:p-10">
+          <div className="mb-8">
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">Sign In</h3>
+            <p className="text-gray-600">Enter your credentials to continue</p>
+          </div>
+
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-xl">
+              <p className="text-red-800 text-sm font-medium">{error}</p>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="you@example.com"
+                  className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                  className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                  ) : (
+                    <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full py-3 px-6 rounded-xl font-semibold text-white transition-all ${
+                loading
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-lg hover:shadow-xl'
+              }`}
+            >
+              {loading ? 'Signing In...' : 'Sign In →'}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-gray-600">
+              Don't have an account?{' '}
+              <Link to="/register" className="text-purple-600 hover:text-purple-700 font-semibold">
+                Create one now
+              </Link>
+            </p>
+          </div>
+
+          <div className="mt-4 text-center">
+            <Link to="/" className="text-sm text-gray-500 hover:text-gray-700">
+              ← Back to Home
+            </Link>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
