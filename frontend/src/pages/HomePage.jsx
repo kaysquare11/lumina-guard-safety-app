@@ -137,7 +137,7 @@ function HomePage() {
       <div className="bg-white/90 backdrop-blur-md border-t border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-gray-600">
-            <p>&copy; 2024 Lumina Guard. Your Circle of Light. 💜</p>
+            <p>&copy; 2025 Lumina Guard. Your Circle of Light. 💜</p>
           </div>
         </div>
       </div>
